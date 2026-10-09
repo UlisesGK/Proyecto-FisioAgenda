@@ -1,0 +1,80 @@
+@startuml
+skinparam dpi 200
+skinparam linetype ortho
+skinparam shadowing false
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #0F766E
+  HeaderBackgroundColor #CCEFEA
+  ArrowColor #115E59
+  FontName Arial
+}
+hide circle
+hide methods
+title Diagrama Entidad-Relación de FisioAgenda (modelo lógico)
+
+entity "usuario" as usuario {
+  * id : INTEGER <<PK>>
+  --
+  * username : TEXT <<UNIQUE>>
+  * nombre_completo : TEXT
+  * password_hash : TEXT
+  * salt : TEXT
+  * rol : TEXT (ADMIN | FISIOTERAPEUTA | RECEPCION)
+  * activo : INTEGER (0/1)
+  * intentos_fallidos : INTEGER
+  bloqueado_hasta : TEXT (ISO-8601)
+}
+
+entity "paciente" as paciente {
+  * id : INTEGER <<PK>>
+  --
+  * dni : TEXT <<UNIQUE>>
+  * nombre : TEXT
+  * apellidos : TEXT
+  * telefono : TEXT
+  email : TEXT
+  fecha_nacimiento : TEXT
+  observaciones : TEXT
+  * fecha_alta : TEXT
+}
+
+entity "tratamiento" as tratamiento {
+  * id : INTEGER <<PK>>
+  --
+  * nombre : TEXT <<UNIQUE>>
+  descripcion : TEXT
+  * duracion_min : INTEGER (10-240)
+  * precio : REAL (>= 0)
+  * activo : INTEGER (0/1)
+}
+
+entity "cita" as cita {
+  * id : INTEGER <<PK>>
+  --
+  * paciente_id : INTEGER <<FK>>
+  * fisioterapeuta_id : INTEGER <<FK>>
+  * tratamiento_id : INTEGER <<FK>>
+  * fecha_hora : TEXT (ISO-8601)
+  * estado : TEXT (PROGRAMADA | REALIZADA |\n CANCELADA | NO_ASISTIDA)
+  notas : TEXT
+}
+
+entity "nota_clinica" as nota {
+  * id : INTEGER <<PK>>
+  --
+  * paciente_id : INTEGER <<FK>>
+  cita_id : INTEGER <<FK>>
+  * autor_id : INTEGER <<FK>>
+  * fecha : TEXT
+  * contenido : TEXT
+  * escala_dolor : INTEGER (0-10)
+}
+
+paciente ||--o{ cita : "solicita"
+usuario ||--o{ cita : "atiende"
+tratamiento ||--o{ cita : "se aplica en"
+paciente ||--o{ nota : "tiene historial"
+usuario ||--o{ nota : "redacta"
+cita |o--o{ nota : "documenta"
+@enduml

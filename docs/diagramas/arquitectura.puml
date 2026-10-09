@@ -1,0 +1,59 @@
+@startuml
+skinparam dpi 200
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam package {
+  BackgroundColor #F4F7F8
+  BorderColor #0F766E
+}
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #115E59
+}
+title Arquitectura en capas de FisioAgenda
+
+package "Presentación (com.fisioagenda.ui)" as UI {
+  [LoginFrame] as LF
+  [MainFrame + Secciones\n(Inicio, Pacientes, Agenda,\nTratamientos, Usuarios)] as MF
+  [Diálogos y componentes\n(Toast, AnimatedCardPanel...)] as DLG
+}
+package "Lógica de negocio (com.fisioagenda.service)" as SRV {
+  [ServiceLocator] as SL
+  [AuthService] as AS
+  [PacienteService · CitaService\nTratamientoService · UsuarioService\nHistorialService · EstadisticasService] as OS
+}
+package "Seguridad y utilidades" as SEC {
+  [PasswordHasher (PBKDF2)] as PH
+  [Sesion] as SE
+  [Validador · Formatos] as VA
+}
+package "Acceso a datos (com.fisioagenda.dao)" as DAO {
+  [Interfaces DAO] as IDAO
+  [Implementaciones SQLite\n(JDBC + PreparedStatement)] as SDAO
+}
+package "Persistencia (com.fisioagenda.db)" as DB {
+  [Database (conexión única)] as DBC
+  [EsquemaBD (DDL + datos demo)] as ESQ
+}
+database "fisioagenda.db\n(SQLite)" as FILE
+[Modelo de dominio\n(com.fisioagenda.model)] as MODEL
+
+LF --> SL
+MF --> SL
+DLG --> SL
+SL --> AS
+SL --> OS
+AS --> PH
+AS --> SE
+OS --> VA
+OS --> SE
+AS --> IDAO
+OS --> IDAO
+SDAO .up.|> IDAO
+SDAO --> DBC
+ESQ --> DBC
+DBC --> FILE
+UI ..> MODEL
+SRV ..> MODEL
+DAO ..> MODEL
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+skinparam dpi 200
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam usecase {
+  BackgroundColor #E6F6F3
+  BorderColor #0F766E
+}
+skinparam actorStyle awesome
+left to right direction
+title Diagrama de casos de uso de FisioAgenda
+
+actor "Personal de la clínica\n(cualquier rol)" as Personal
+actor "Recepción" as Recep
+actor "Fisioterapeuta" as Fisio
+actor "Administrador" as Admin
+Recep -|> Personal
+
+rectangle "FisioAgenda" {
+  usecase "CU01 Iniciar sesión" as CU01
+  usecase "CU02 Cerrar sesión\n(manual o por inactividad)" as CU02
+  usecase "CU03 Cambiar contraseña" as CU03
+  usecase "CU04 Consultar panel de inicio" as CU04
+  usecase "CU05 Gestionar pacientes" as CU05
+  usecase "CU07 Consultar agenda diaria" as CU07
+  usecase "CU08 Programar / editar cita" as CU08
+  usecase "CU09 Consultar huecos libres" as CU09
+  usecase "CU10 Cancelar cita" as CU10
+  usecase "CU11 Registrar asistencia" as CU11
+  usecase "CU12 Consultar historial clínico" as CU12
+  usecase "CU13 Añadir nota clínica (EVA)" as CU13
+  usecase "CU06 Eliminar paciente" as CU06
+  usecase "CU14 Gestionar tratamientos" as CU14
+  usecase "CU15 Gestionar usuarios" as CU15
+}
+
+Personal --> CU01
+Personal --> CU02
+Personal --> CU03
+Personal --> CU04
+Personal --> CU05
+Personal --> CU07
+Personal --> CU08
+Personal --> CU10
+CU08 .> CU09 : <<include>>
+CU13 .> CU12 : <<extend>>
+CU11 <-- Fisio
+CU12 <-- Fisio
+CU13 <-- Fisio
+CU11 <-- Admin
+CU12 <-- Admin
+CU06 <-- Admin
+CU14 <-- Admin
+CU15 <-- Admin
+
+CU01 -[hidden]-> CU15
+CU02 -[hidden]-> CU14
+CU03 -[hidden]-> CU06
+CU04 -[hidden]-> CU11
+CU05 -[hidden]-> CU12
+CU07 -[hidden]-> CU13
+note "Recepción, Fisioterapeuta y Administrador\nson especializaciones de «Personal de la clínica»:\nheredan todos sus casos de uso." as N1
+Personal .. N1
+@enduml
