@@ -47,14 +47,16 @@ class ValidadorTest {
     }
 
     @ParameterizedTest(name = "teléfono válido: {0}")
-    @ValueSource(strings = {"612345678", "712345678", "812345678", "912345678", "600 12 34 56"})
+    @ValueSource(strings = {"612345678", "712345678", "812345678", "912345678", "600 12 34 56",
+        "+34612345678", "0034 612 345 678", "+32 32 2  3   4 3   34  5", "+1 (212) 555-0198", "+44 7911 123456"})
     void telefonosValidos(String telefono) {
         assertTrue(Validador.esTelefonoValido(telefono));
     }
 
     @ParameterizedTest(name = "teléfono no válido: \"{0}\"")
     @NullAndEmptySource
-    @ValueSource(strings = {"512345678", "61234567", "6123456789", "61234567a", "+34612345678"})
+    @ValueSource(strings = {"512345678", "61234567", "6123456789", "61234567a", "+34 512345678", "+",
+        "+0 612345678", "+32 12a456", "+44 12", "+49 1234567890123456"})
     void telefonosNoValidos(String telefono) {
         assertFalse(Validador.esTelefonoValido(telefono));
     }
@@ -93,5 +95,18 @@ class ValidadorTest {
         assertTrue(Validador.noVacio("x"));
         assertFalse(Validador.noVacio("   "));
         assertFalse(Validador.noVacio(null));
+    }
+
+    @ParameterizedTest(name = "\"{0}\" se normaliza a \"{1}\"")
+    @org.junit.jupiter.params.provider.CsvSource({
+        "'600 12 34 56', 600123456",
+        "'+32 32 2  3   4 3   34  5', '+32 322343345'",
+        "'+34645230920', '+34 645230920'",
+        "'0044 7911 123456', '+44 7911123456'",
+        "'+1 (212) 555-0198', '+1 2125550198'",
+        "'+353861234567', '+353 861234567'"
+    })
+    void normalizaTelefonos(String entrada, String esperado) {
+        assertEquals(esperado, Validador.normalizarTelefono(entrada));
     }
 }

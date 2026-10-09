@@ -43,7 +43,16 @@ public final class PacienteDialog extends DialogoBase {
         this.original = paciente;
 
         txtDni.putClientProperty("JTextField.placeholderText", "12345678Z");
-        txtTelefono.putClientProperty("JTextField.placeholderText", "612345678");
+        txtTelefono.putClientProperty("JTextField.placeholderText", "612345678 o +32 470123456");
+        // Al salir del campo, los espacios del número se recolocan solos.
+        txtTelefono.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (Validador.esTelefonoValido(txtTelefono.getText())) {
+                    txtTelefono.setText(Validador.normalizarTelefono(txtTelefono.getText()));
+                }
+            }
+        });
         txtEmail.putClientProperty("JTextField.placeholderText", "nombre@ejemplo.com");
         txtNacimiento.putClientProperty("JTextField.placeholderText", "dd/mm/aaaa");
         txtNacimiento.setToolTipText("Fecha de nacimiento en formato dd/mm/aaaa (opcional)");
@@ -91,7 +100,7 @@ public final class PacienteDialog extends DialogoBase {
         form.limpiarErrores();
         mostrarError(null);
         String dni = txtDni.getText().trim().toUpperCase(Locale.ROOT);
-        String telefono = txtTelefono.getText().replaceAll("\\s+", "");
+        String telefono = Validador.normalizarTelefono(txtTelefono.getText());
         String nombre = txtNombre.getText().trim();
         String apellidos = txtApellidos.getText().trim();
         String email = txtEmail.getText().trim();
@@ -102,7 +111,7 @@ public final class PacienteDialog extends DialogoBase {
             form.marcarError(txtDni, "DNI/NIE no válido: 8 dígitos y letra (o X/Y/Z, 7 dígitos y letra)");
         }
         if (!Validador.esTelefonoValido(telefono)) {
-            form.marcarError(txtTelefono, "9 dígitos que empiecen por 6, 7, 8 o 9");
+            form.marcarError(txtTelefono, Validador.MENSAJE_TELEFONO);
         }
         if (!Validador.noVacio(nombre)) {
             form.marcarError(txtNombre, "El nombre es obligatorio");

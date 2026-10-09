@@ -130,7 +130,7 @@ public class PacienteService {
             throw new ServiceException("Los apellidos no pueden superar " + MAX_APELLIDOS + " caracteres.");
         }
         if (!Validador.esTelefonoValido(p.getTelefono())) {
-            throw new ServiceException("El teléfono debe tener 9 dígitos y empezar por 6, 7, 8 o 9.");
+            throw new ServiceException("El teléfono no es válido: " + Validador.MENSAJE_TELEFONO + ".");
         }
         if (p.getEmail() != null && !Validador.esEmailValido(p.getEmail())) {
             throw new ServiceException("El email no tiene un formato válido.");
