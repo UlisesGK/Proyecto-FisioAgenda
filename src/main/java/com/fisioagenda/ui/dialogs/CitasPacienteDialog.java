@@ -50,7 +50,7 @@ public final class CitasPacienteDialog extends DialogoBase {
         tabla.setAnchoColumna(4, 140);
         tabla.getColumnModel().getColumn(0).setMinWidth(144);
         tabla.getColumnModel().getColumn(3).setMinWidth(118);
-        tabla.getOrdenador().setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
+        tabla.getOrdenador().setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
 
         Tarjeta tarjeta = new Tarjeta(new BorderLayout(), 8);
         tarjeta.add(Componentes.scroll(tabla), BorderLayout.CENTER);
