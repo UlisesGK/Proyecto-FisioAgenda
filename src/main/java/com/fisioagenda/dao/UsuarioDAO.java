@@ -17,4 +17,17 @@ public interface UsuarioDAO {
     void actualizar(Usuario usuario);
     /** Actualiza solo los campos de control de acceso (intentos fallidos y bloqueo). */
     void actualizarControlAcceso(Usuario usuario);
+
+    /** Guarda el hash del token de un dispositivo recordado y borra los que ya han caducado. */
+    void guardarTokenDispositivo(int usuarioId, String tokenHash, java.time.LocalDateTime ahora,
+                                 java.time.LocalDateTime expira);
+
+    /** Id del usuario al que pertenece un token de dispositivo que aún no ha caducado. */
+    Optional<Integer> buscarUsuarioPorToken(String tokenHash, java.time.LocalDateTime ahora);
+
+    /** Borra un token de dispositivo recordado. */
+    void borrarTokenDispositivo(String tokenHash);
+
+    /** Borra todos los dispositivos recordados de un usuario (por ejemplo, al cambiar su contraseña). */
+    void borrarTokensDe(int usuarioId);
 }

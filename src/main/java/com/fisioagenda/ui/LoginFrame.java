@@ -1,6 +1,7 @@
 package com.fisioagenda.ui;
 
 import com.fisioagenda.model.Usuario;
+import com.fisioagenda.security.DispositivoLocal;
 import com.fisioagenda.service.ServiceException;
 import com.fisioagenda.service.ServiceLocator;
 import com.fisioagenda.ui.components.Animador;
@@ -12,6 +13,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,6 +47,7 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,6 +63,7 @@ public class LoginFrame extends JFrame {
 
     private final JTextField txtUsuario = new JTextField();
     private final JPasswordField txtPassword = new JPasswordField();
+    private final JCheckBox chkRecordar = new JCheckBox("Recordar este dispositivo");
     private final JButton btnEntrar;
     private final JLabel lblError = Componentes.etiquetaError();
     private final JPanel formulario = new JPanel();
@@ -84,7 +88,7 @@ public class LoginFrame extends JFrame {
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setIconImages(Iconos.imagenesVentana());
-        setSize(900, 560);
+        setSize(900, 600);
         setLocationRelativeTo(null);
 
         btnEntrar = Componentes.boton("Entrar", null, Componentes.EstiloBoton.PRIMARIO, 'E',
@@ -162,6 +166,12 @@ public class LoginFrame extends JFrame {
         txtPassword.putClientProperty("JTextField.trailingComponent", crearBotonMostrar());
         txtPassword.getAccessibleContext().setAccessibleName("Contraseña");
         agregar(dimensionar(txtPassword), 6);
+
+        chkRecordar.setOpaque(false);
+        chkRecordar.setMnemonic('R');
+        chkRecordar.setToolTipText("No volver a pedir la contraseña en este equipo durante "
+                + com.fisioagenda.service.AuthService.DIAS_RECORDAR + " días. Se olvida al cerrar sesión.");
+        agregar(chkRecordar, 10);
 
         agregar(lblError, 10);
         lblError.setPreferredSize(new Dimension(ANCHO_CAMPOS, 34));
@@ -283,9 +293,14 @@ public class LoginFrame extends JFrame {
         }
         Componentes.mostrarError(lblError, null);
         habilitarFormulario(false);
+        boolean recordar = chkRecordar.isSelected();
         Tareas.ejecutar(() -> {
             try {
-                return ServiceLocator.auth().login(usuario, password);
+                Usuario autenticado = ServiceLocator.auth().login(usuario, password);
+                if (recordar) {
+                    recordarEsteDispositivo();
+                }
+                return autenticado;
             } finally {
                 Arrays.fill(password, '\0');
             }
@@ -302,6 +317,33 @@ public class LoginFrame extends JFrame {
         });
     }
 
+    /** Guarda el token de este equipo; si falla, el acceso sigue adelante y la próxima vez se pide la contraseña. */
+    private static void recordarEsteDispositivo() {
+        try {
+            DispositivoLocal.guardar(ServiceLocator.auth().recordarDispositivo());
+        } catch (RuntimeException e) {
+            LOG.log(Level.WARNING, "No se pudo recordar el dispositivo", e);
+        }
+    }
+
+    /** Abre la aplicación directamente si este equipo está recordado; si no, muestra la pantalla de acceso. */
+    public static void iniciar() {
+        Optional<String> token = DispositivoLocal.leer();
+        if (token.isPresent()) {
+            try {
+                Optional<Usuario> usuario = ServiceLocator.auth().loginConToken(token.get());
+                if (usuario.isPresent()) {
+                    new MainFrame(usuario.get()).setVisible(true);
+                    return;
+                }
+            } catch (RuntimeException e) {
+                LOG.log(Level.WARNING, "No se pudo entrar con el dispositivo recordado", e);
+            }
+            DispositivoLocal.borrar();
+        }
+        new LoginFrame().mostrar();
+    }
+
     private void abrirAplicacion(Usuario usuario) {
         try {
             MainFrame principal = new MainFrame(usuario);
@@ -316,6 +358,7 @@ public class LoginFrame extends JFrame {
     private void habilitarFormulario(boolean habilitado) {
         txtUsuario.setEnabled(habilitado);
         txtPassword.setEnabled(habilitado);
+        chkRecordar.setEnabled(habilitado);
         btnEntrar.setEnabled(habilitado);
         btnEntrar.setText(habilitado ? "Entrar" : "Comprobando...");
     }

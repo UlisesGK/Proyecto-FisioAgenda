@@ -127,6 +127,7 @@ public class UsuarioService {
             usuario.setSalt(sal);
             usuario.setPasswordHash(PasswordHasher.hash(nueva, sal));
             usuarioDAO.actualizar(usuario);
+            usuarioDAO.borrarTokensDe(usuarioId);
             usuario.setIntentosFallidos(0);
             usuario.setBloqueadoHasta(null);
             usuarioDAO.actualizarControlAcceso(usuario);

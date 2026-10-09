@@ -88,7 +88,13 @@ public final class EsquemaBD {
           contenido TEXT NOT NULL,
           escala_dolor INTEGER NOT NULL CHECK (escala_dolor BETWEEN 0 AND 10)
         )""",
-        "CREATE INDEX IF NOT EXISTS idx_nota_paciente ON nota_clinica(paciente_id, fecha)"
+        "CREATE INDEX IF NOT EXISTS idx_nota_paciente ON nota_clinica(paciente_id, fecha)",
+        """
+        CREATE TABLE IF NOT EXISTS dispositivo_recordado (
+          token_hash TEXT PRIMARY KEY,
+          usuario_id INTEGER NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+          expira TEXT NOT NULL
+        )"""
     };
 
     // ---------------------------------------------------------------- datos de demostración

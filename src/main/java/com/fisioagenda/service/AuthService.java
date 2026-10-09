@@ -6,10 +6,16 @@ import com.fisioagenda.security.PasswordHasher;
 import com.fisioagenda.security.Sesion;
 import com.fisioagenda.util.Validador;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +39,9 @@ public class AuthService {
     public static final int MINUTOS_BLOQUEO = 5;
     /** Mensaje genérico de credenciales incorrectas. */
     public static final String MENSAJE_CREDENCIALES = "Usuario o contraseña incorrectos.";
+    /** Días que un dispositivo queda recordado. */
+    public static final int DIAS_RECORDAR = 30;
+    private static final SecureRandom ALEATORIO = new SecureRandom();
 
     /** Sal fija para calcular un hash de relleno cuando el usuario no existe (iguala los tiempos de respuesta). */
     private static final String SAL_RELLENO = PasswordHasher.generarSal();
@@ -113,6 +122,62 @@ public class AuthService {
         }
     }
 
+    /**
+     * Recuerda este dispositivo para el usuario de la sesión durante {@value #DIAS_RECORDAR} días.
+     * En la base de datos solo se guarda el hash SHA-256 del token, nunca el token.
+     *
+     * @return el token que el dispositivo debe guardar para entrar sin contraseña
+     */
+    public String recordarDispositivo() {
+        Usuario usuario = Permisos.exigirSesion();
+        byte[] bytes = new byte[32];
+        ALEATORIO.nextBytes(bytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        LocalDateTime ahora = LocalDateTime.now(reloj);
+        usuarioDAO.guardarTokenDispositivo(usuario.getId(), hashToken(token), ahora, ahora.plusDays(DIAS_RECORDAR));
+        return token;
+    }
+
+    /**
+     * Inicia la sesión con el token de un dispositivo recordado. Un token desconocido, caducado o de una
+     * cuenta desactivada o bloqueada no sirve y se borra.
+     *
+     * @return el usuario, o vacío si hay que pedir usuario y contraseña
+     */
+    public Optional<Usuario> loginConToken(String token) {
+        if (!Validador.noVacio(token)) {
+            return Optional.empty();
+        }
+        String hash = hashToken(token);
+        LocalDateTime ahora = LocalDateTime.now(reloj);
+        Optional<Usuario> usuario = usuarioDAO.buscarUsuarioPorToken(hash, ahora)
+                .flatMap(usuarioDAO::buscarPorId)
+                .filter(u -> u.isActivo() && !u.estaBloqueado(ahora));
+        if (usuario.isEmpty()) {
+            usuarioDAO.borrarTokenDispositivo(hash);
+            return Optional.empty();
+        }
+        sinCredenciales(usuario.get());
+        Sesion.getInstance().iniciar(usuario.get());
+        return usuario;
+    }
+
+    /** Olvida un dispositivo recordado (al cerrar sesión de forma explícita). */
+    public void olvidarDispositivo(String token) {
+        if (Validador.noVacio(token)) {
+            usuarioDAO.borrarTokenDispositivo(hashToken(token));
+        }
+    }
+
+    static String hashToken(String token) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 no disponible", e);
+        }
+    }
+
     /** Cierra la sesión actual. */
     public void logout() {
         Sesion.getInstance().cerrar();
@@ -145,6 +210,7 @@ public class AuthService {
             usuario.setSalt(sal);
             usuario.setPasswordHash(PasswordHasher.hash(nueva, sal));
             usuarioDAO.actualizar(usuario);
+            usuarioDAO.borrarTokensDe(usuario.getId());
         } finally {
             limpiar(actual);
             limpiar(nueva);

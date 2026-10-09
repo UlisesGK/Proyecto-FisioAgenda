@@ -2,6 +2,7 @@ package com.fisioagenda.ui;
 
 import com.fisioagenda.model.Rol;
 import com.fisioagenda.model.Usuario;
+import com.fisioagenda.security.DispositivoLocal;
 import com.fisioagenda.service.ServiceLocator;
 import com.fisioagenda.ui.components.AnimatedCardPanel;
 import com.fisioagenda.ui.components.Avatar;
@@ -314,6 +315,15 @@ public class MainFrame extends JFrame {
 
     private void confirmarCierreSesion() {
         if (Avisos.confirmar(this, "Cerrar sesión", "¿Desea cerrar la sesión actual?")) {
+            // Al cerrar sesión a propósito, este equipo deja de estar recordado.
+            DispositivoLocal.leer().ifPresent(token -> {
+                try {
+                    ServiceLocator.auth().olvidarDispositivo(token);
+                } catch (RuntimeException e) {
+                    LOG.log(Level.WARNING, "No se pudo olvidar el dispositivo", e);
+                }
+            });
+            DispositivoLocal.borrar();
             cerrarSesion(null);
         }
     }

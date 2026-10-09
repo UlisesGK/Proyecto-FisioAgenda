@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -101,6 +102,56 @@ public class SqliteUsuarioDAO implements UsuarioDAO {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new DataAccessException("No se pudo actualizar el control de acceso del usuario", e);
+        }
+    }
+
+    @Override
+    public void guardarTokenDispositivo(int usuarioId, String tokenHash, LocalDateTime ahora, LocalDateTime expira) {
+        try (PreparedStatement borrar = database.getConexion().prepareStatement(
+                     "DELETE FROM dispositivo_recordado WHERE expira < ?");
+             PreparedStatement ps = database.getConexion().prepareStatement(
+                     "INSERT INTO dispositivo_recordado (token_hash, usuario_id, expira) VALUES (?, ?, ?)")) {
+            borrar.setString(1, FechasBD.textoPreciso(ahora));
+            borrar.executeUpdate();
+            ps.setString(1, tokenHash);
+            ps.setInt(2, usuarioId);
+            ps.setString(3, FechasBD.textoPreciso(expira));
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataAccessException("No se pudo recordar el dispositivo", e);
+        }
+    }
+
+    @Override
+    public Optional<Integer> buscarUsuarioPorToken(String tokenHash, LocalDateTime ahora) {
+        String sql = "SELECT usuario_id FROM dispositivo_recordado WHERE token_hash = ? AND expira > ?";
+        try (PreparedStatement ps = database.getConexion().prepareStatement(sql)) {
+            ps.setString(1, tokenHash);
+            ps.setString(2, FechasBD.textoPreciso(ahora));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(rs.getInt(1)) : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("No se pudo comprobar el dispositivo recordado", e);
+        }
+    }
+
+    @Override
+    public void borrarTokenDispositivo(String tokenHash) {
+        borrarTokens("DELETE FROM dispositivo_recordado WHERE token_hash = ?", tokenHash);
+    }
+
+    @Override
+    public void borrarTokensDe(int usuarioId) {
+        borrarTokens("DELETE FROM dispositivo_recordado WHERE usuario_id = ?", usuarioId);
+    }
+
+    private void borrarTokens(String sql, Object parametro) {
+        try (PreparedStatement ps = database.getConexion().prepareStatement(sql)) {
+            ps.setObject(1, parametro);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataAccessException("No se pudo olvidar el dispositivo", e);
         }
     }
 

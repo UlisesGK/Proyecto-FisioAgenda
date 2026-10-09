@@ -55,7 +55,7 @@ public final class Main {
             });
             return;
         }
-        SwingUtilities.invokeLater(() -> new LoginFrame().mostrar());
+        SwingUtilities.invokeLater(LoginFrame::iniciar);
     }
 
     /** Instala FlatLaf y ajusta redondeos, foco, tipografía y colores comunes. */

@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -211,6 +212,57 @@ class AuthServiceTest {
     void cambiarPasswordExigeSesion() {
         assertThrows(ServiceException.class,
                 () -> auth.cambiarPassword(pwd(BdPruebas.PASSWORD), pwd("NuevaClave9#"), pwd("NuevaClave9#")));
+    }
+
+    @Test
+    void dispositivoRecordadoPermiteEntrarSinContrasena() {
+        auth.login("fisio", pwd(BdPruebas.PASSWORD));
+        String token = auth.recordarDispositivo();
+        auth.logout();
+
+        Optional<Usuario> usuario = auth.loginConToken(token);
+        assertTrue(usuario.isPresent());
+        assertEquals(fisio.getId(), usuario.get().getId());
+        assertSame(usuario.get(), Sesion.getInstance().getUsuario());
+        assertNull(usuario.get().getPasswordHash());
+    }
+
+    @Test
+    void tokenInventadoOCaducadoNoSirve() {
+        auth.login("fisio", pwd(BdPruebas.PASSWORD));
+        String token = auth.recordarDispositivo();
+        auth.logout();
+
+        assertTrue(auth.loginConToken("inventado").isEmpty());
+        assertTrue(auth.loginConToken("").isEmpty());
+        AuthService pasadoUnMes = new AuthService(usuarioDAO,
+                BdPruebas.reloj(AHORA.plusDays(AuthService.DIAS_RECORDAR + 1)));
+        assertTrue(pasadoUnMes.loginConToken(token).isEmpty());
+        assertFalse(Sesion.getInstance().estaIniciada());
+    }
+
+    @Test
+    void cerrarSesionOCambiarLaContrasenaOlvidanElDispositivo() {
+        auth.login("fisio", pwd(BdPruebas.PASSWORD));
+        String token = auth.recordarDispositivo();
+        auth.olvidarDispositivo(token);
+        assertTrue(auth.loginConToken(token).isEmpty());
+
+        String otro = auth.recordarDispositivo();
+        auth.cambiarPassword(pwd(BdPruebas.PASSWORD), pwd("Nueva1234!"), pwd("Nueva1234!"));
+        assertTrue(auth.loginConToken(otro).isEmpty());
+    }
+
+    @Test
+    void cuentaDesactivadaNoEntraConToken() {
+        auth.login("fisio", pwd(BdPruebas.PASSWORD));
+        String token = auth.recordarDispositivo();
+        auth.logout();
+        Usuario guardado = usuarioDAO.buscarPorId(fisio.getId()).orElseThrow();
+        guardado.setActivo(false);
+        usuarioDAO.actualizar(guardado);
+
+        assertTrue(auth.loginConToken(token).isEmpty());
     }
 
     private static char[] pwd(String texto) {
