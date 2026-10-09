@@ -43,6 +43,14 @@ public final class PacienteDialog extends DialogoBase {
         this.original = paciente;
 
         txtDni.putClientProperty("JTextField.placeholderText", "12345678Z");
+        txtDni.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (Validador.esDniNieFormatoValido(txtDni.getText())) {
+                    txtDni.setText(Validador.normalizarDni(txtDni.getText()));
+                }
+            }
+        });
         txtTelefono.putClientProperty("JTextField.placeholderText", "612345678 o +32 470123456");
         // Al salir del campo, los espacios del número se recolocan solos.
         txtTelefono.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -99,7 +107,7 @@ public final class PacienteDialog extends DialogoBase {
     private void guardar() {
         form.limpiarErrores();
         mostrarError(null);
-        String dni = txtDni.getText().trim().toUpperCase(Locale.ROOT);
+        String dni = Validador.normalizarDni(txtDni.getText());
         String telefono = Validador.normalizarTelefono(txtTelefono.getText());
         String nombre = txtNombre.getText().trim();
         String apellidos = txtApellidos.getText().trim();
@@ -107,8 +115,8 @@ public final class PacienteDialog extends DialogoBase {
         String nacimientoTexto = txtNacimiento.getText().trim();
         LocalDate nacimiento = null;
 
-        if (!Validador.esDniNieValido(dni)) {
-            form.marcarError(txtDni, "DNI/NIE no válido: 8 dígitos y letra (o X/Y/Z, 7 dígitos y letra)");
+        if (!Validador.esDniNieFormatoValido(dni)) {
+            form.marcarError(txtDni, "Formato: 12345678Z (DNI) o X1234567L (NIE)");
         }
         if (!Validador.esTelefonoValido(telefono)) {
             form.marcarError(txtTelefono, Validador.MENSAJE_TELEFONO);
@@ -136,6 +144,17 @@ public final class PacienteDialog extends DialogoBase {
             mostrarError("Revise los campos marcados en rojo.");
             form.enfocarPrimerError();
             return;
+        }
+        // El DNI puede escribirse libremente con el formato español; si la letra no cuadra con el número, se avisa.
+        boolean dniCambiado = original == null || !dni.equals(original.getDni());
+        if (dniCambiado && !Validador.esDniNieValido(dni)) {
+            char letra = Validador.letraDniEsperada(dni).orElse('?');
+            if (!Avisos.confirmar(this, "Letra del DNI/NIE", "La letra de " + dni
+                    + " no coincide con su número (le correspondería la " + letra + ").\n¿Desea guardarlo igualmente?")) {
+                form.marcarError(txtDni, "Con este número, la letra sería la " + letra);
+                form.enfocarPrimerError();
+                return;
+            }
         }
 
         Paciente p = new Paciente();

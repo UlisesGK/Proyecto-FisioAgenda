@@ -164,7 +164,7 @@ class EsquemaBDTest {
         assertEquals(12, pacientes.size());
         for (Paciente p : pacientes) {
             assertTrue(Validador.esDniNieValido(p.getDni()), p.getDni());
-            assertTrue(Validador.esTelefonoValido(p.getTelefono()) && p.getTelefono().startsWith("6"), p.getTelefono());
+            assertTrue(Validador.esTelefonoValido(p.getTelefono()) && p.getTelefono().startsWith("+34 6"), p.getTelefono());
             assertTrue(p.getEmail() == null || (Validador.esEmailValido(p.getEmail())
                     && p.getEmail().endsWith("@example.com")), p.getEmail());
             assertFalse(p.getFechaAlta().isAfter(hoy));

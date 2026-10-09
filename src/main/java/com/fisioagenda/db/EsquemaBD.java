@@ -276,6 +276,16 @@ public final class EsquemaBD {
         if (contarUsuarios(con) == 0) {
             cargarDatosDemo(con, LocalDateTime.now(reloj));
         }
+        anadirPrefijoATelefonos(con);
+    }
+
+    /** Añade el prefijo español a los teléfonos guardados sin prefijo (bases de datos anteriores a la 1.1). */
+    private static void anadirPrefijoATelefonos(Connection con) {
+        try (Statement st = con.createStatement()) {
+            st.executeUpdate("UPDATE paciente SET telefono = '+34 ' || telefono WHERE telefono NOT LIKE '+%'");
+        } catch (SQLException e) {
+            throw new DataAccessException("No se pudo añadir el prefijo a los teléfonos", e);
+        }
     }
 
     /** Crea únicamente las tablas e índices, sin datos (útil para las pruebas). */

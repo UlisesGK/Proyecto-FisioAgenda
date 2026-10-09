@@ -114,8 +114,9 @@ public class PacienteService {
     }
 
     private void validar(Paciente p) {
-        if (!Validador.esDniNieValido(p.getDni())) {
-            throw new ServiceException("El DNI/NIE no es válido. Compruebe los números y la letra.");
+        if (!Validador.esDniNieFormatoValido(p.getDni())) {
+            throw new ServiceException("El DNI/NIE no tiene un formato válido: 8 cifras y letra (12345678Z) "
+                    + "o X, Y o Z, 7 cifras y letra (X1234567L).");
         }
         if (!Validador.noVacio(p.getNombre())) {
             throw new ServiceException("El nombre es obligatorio.");

@@ -1,6 +1,7 @@
 package com.fisioagenda.util;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,8 +18,8 @@ public final class Validador {
 
     /** Letras de control del DNI/NIE, indexadas por el resto de dividir el número entre 23. */
     private static final String LETRAS_DNI = "TRWAGMYFPDXBNJZSQVHLCKE";
-    private static final Pattern DNI = Pattern.compile("\\d{8}[A-Z]");
-    private static final Pattern NIE = Pattern.compile("[XYZ]\\d{7}[A-Z]");
+    private static final Pattern DNI = Pattern.compile("\\d{8}[" + LETRAS_DNI + "]");
+    private static final Pattern NIE = Pattern.compile("[XYZ]\\d{7}[" + LETRAS_DNI + "]");
     private static final Pattern EMAIL =
             Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$");
     private static final Pattern TELEFONO = Pattern.compile("[6789]\\d{8}");
@@ -47,11 +48,11 @@ public final class Validador {
      * @return el documento normalizado, o {@code null} si se recibe {@code null}
      */
     public static String normalizarDni(String dni) {
-        return dni == null ? null : dni.replaceAll("[\\s-]", "").toUpperCase(Locale.ROOT);
+        return dni == null ? null : dni.replaceAll("[\\s.-]", "").toUpperCase(Locale.ROOT);
     }
 
     /**
-     * Normaliza un teléfono. Uno nacional queda solo con sus cifras ("600 12 34 56" → "600123456"); uno con
+     * Normaliza un teléfono. Uno español sin prefijo recibe el +34 ("600 12 34 56" → "+34 600123456"); uno con
      * prefijo internacional ("+" o "00") queda como prefijo, un espacio y el número seguido, por desordenados
      * que estén los espacios ("+32 32 2  3 4 3 34 5" → "+32 322343345").
      *
@@ -66,7 +67,9 @@ public final class Validador {
             texto = "+" + texto.substring(2);
         }
         if (!texto.startsWith("+")) {
-            return texto.replaceAll(SEPARADORES, "");
+            // Un número español sin prefijo recibe el +34.
+            String cifras = texto.replaceAll(SEPARADORES, "");
+            return TELEFONO.matcher(cifras).matches() ? "+34 " + cifras : cifras;
         }
         String resto = texto.substring(1).trim();
         String cifras = resto.replaceAll(SEPARADORES, "");
@@ -94,8 +97,22 @@ public final class Validador {
      */
     public static boolean esDniNieValido(String documento) {
         String valor = normalizarDni(documento);
+        return letraDniEsperada(valor).map(letra -> valor.charAt(valor.length() - 1) == letra).orElse(false);
+    }
+
+    /**
+     * Comprueba solo el formato de un DNI (8 cifras y letra) o NIE (X, Y o Z, 7 cifras y letra), con una de
+     * las 23 letras oficiales, pero sin exigir que la letra corresponda al número.
+     */
+    public static boolean esDniNieFormatoValido(String documento) {
+        return letraDniEsperada(documento).isPresent();
+    }
+
+    /** Letra de control que corresponde al número de un DNI/NIE con formato válido; vacío si no lo tiene. */
+    public static Optional<Character> letraDniEsperada(String documento) {
+        String valor = normalizarDni(documento);
         if (valor == null) {
-            return false;
+            return Optional.empty();
         }
         String numero;
         if (DNI.matcher(valor).matches()) {
@@ -103,10 +120,9 @@ public final class Validador {
         } else if (NIE.matcher(valor).matches()) {
             numero = "XYZ".indexOf(valor.charAt(0)) + valor.substring(1, 8);
         } else {
-            return false;
+            return Optional.empty();
         }
-        char letraEsperada = LETRAS_DNI.charAt(Integer.parseInt(numero) % 23);
-        return valor.charAt(valor.length() - 1) == letraEsperada;
+        return Optional.of(LETRAS_DNI.charAt(Integer.parseInt(numero) % 23));
     }
 
     /** Comprueba el formato básico de una dirección de email (usuario@dominio.tld). */

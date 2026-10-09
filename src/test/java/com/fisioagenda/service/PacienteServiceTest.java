@@ -62,7 +62,7 @@ class PacienteServiceTest {
         assertTrue(guardado.getId() > 0);
         assertEquals("12345678Z", guardado.getDni());
         assertEquals("Lucía", guardado.getNombre());
-        assertEquals("612345781", guardado.getTelefono());
+        assertEquals("+34 612345781", guardado.getTelefono());
         assertNull(guardado.getEmail(), "Email vacío se guarda como nulo");
         assertEquals(HOY, guardado.getFechaAlta());
         assertEquals(1, servicio.listar().size());
@@ -70,7 +70,7 @@ class PacienteServiceTest {
 
     @ParameterizedTest(name = "[{index}] {5}")
     @CsvSource(delimiter = '|', value = {
-        "12345678A | Lucía | Fernández | 612345678 | ''                  | DNI/NIE",
+        "1234567A  | Lucía | Fernández | 612345678 | ''                  | DNI/NIE",
         "''        | Lucía | Fernández | 612345678 | ''                  | DNI/NIE",
         "12345678Z | ''    | Fernández | 612345678 | ''                  | nombre",
         "12345678Z | Lucía | '  '      | 612345678 | ''                  | apellidos",
@@ -114,7 +114,7 @@ class PacienteServiceTest {
         servicio.guardar(p);
 
         Paciente leido = servicio.buscarPorId(p.getId()).orElseThrow();
-        assertEquals("699888777", leido.getTelefono());
+        assertEquals("+34 699888777", leido.getTelefono());
         assertEquals(HOY, leido.getFechaAlta());
     }
 
@@ -164,5 +164,11 @@ class PacienteServiceTest {
         p.setEmail(email);
         p.setFechaNacimiento(LocalDate.of(1985, 3, 14));
         return p;
+    }
+
+    @Test
+    void elDniSeGuardaAunqueLaLetraNoCuadreSiTieneFormatoEspanol() {
+        Paciente guardado = servicio.guardar(paciente("12.345.678-a", "Lucía", "Fernández", "612345678", null));
+        assertEquals("12345678A", guardado.getDni());
     }
 }

@@ -99,7 +99,7 @@ class ValidadorTest {
 
     @ParameterizedTest(name = "\"{0}\" se normaliza a \"{1}\"")
     @org.junit.jupiter.params.provider.CsvSource({
-        "'600 12 34 56', 600123456",
+        "'600 12 34 56', '+34 600123456'",
         "'+32 32 2  3   4 3   34  5', '+32 322343345'",
         "'+34645230920', '+34 645230920'",
         "'0044 7911 123456', '+44 7911123456'",
@@ -108,5 +108,17 @@ class ValidadorTest {
     })
     void normalizaTelefonos(String entrada, String esperado) {
         assertEquals(esperado, Validador.normalizarTelefono(entrada));
+    }
+
+    @Test
+    void formatoDeDniSinComprobarLaLetra() {
+        assertTrue(Validador.esDniNieFormatoValido("12345678A"));
+        assertTrue(Validador.esDniNieFormatoValido("12.345.678-a"));
+        assertTrue(Validador.esDniNieFormatoValido("X1234567A"));
+        assertFalse(Validador.esDniNieFormatoValido("12345678I"));
+        assertFalse(Validador.esDniNieFormatoValido("1234567A"));
+        assertFalse(Validador.esDniNieFormatoValido("W1234567L"));
+        assertEquals('Z', Validador.letraDniEsperada("12345678A").orElseThrow());
+        assertEquals('L', Validador.letraDniEsperada("X1234567A").orElseThrow());
     }
 }
