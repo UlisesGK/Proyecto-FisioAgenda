@@ -89,7 +89,13 @@ public class AnimatedCardPanel extends JPanel {
         imagenEntrante = null;
         progreso = 1;
         revalidate();
-        repaint();
+        // Se repinta la ventana completa para no dejar restos de la transición en otras zonas.
+        java.awt.Window ventana = javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (ventana != null) {
+            ventana.repaint();
+        } else {
+            repaint();
+        }
     }
 
     private BufferedImage capturar(Component c) {
@@ -106,7 +112,9 @@ public class AnimatedCardPanel extends JPanel {
         try {
             g.scale(escala, escala);
             g.translate(c.getX(), c.getY());
-            c.paint(g);
+            // printAll pinta directamente en la imagen sin pasar por el búfer de ventana de Swing;
+            // paint() podía dejar ese búfer desplazado en Windows y la ventana se veía descolocada.
+            c.printAll(g);
         } finally {
             g.dispose();
         }

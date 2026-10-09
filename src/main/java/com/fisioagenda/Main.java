@@ -34,6 +34,10 @@ public final class Main {
      * @param args no se usan
      */
     public static void main(String[] args) {
+        // En Windows, el pipeline Direct3D de Java2D pinta la ventana descolocada o a medias con algunas
+        // gráficas y escalados de pantalla (125 %, 150 %). Se desactiva antes de crear cualquier ventana.
+        System.setProperty("sun.java2d.d3d", "false");
+        System.setProperty("sun.java2d.noddraw", "true");
         // Textos estándar de Swing (Aceptar, Cancelar...) y formatos en español, sea cual sea el idioma del sistema.
         Locale.setDefault(Formatos.LOCALE);
         configurarAspecto();
