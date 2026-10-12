@@ -11,7 +11,9 @@ mkdir build-exe\entrada
 copy /y "%JAR%" build-exe\entrada\FisioAgenda.jar >nul
 jpackage --type app-image --name FisioAgenda --input build-exe\entrada --main-jar FisioAgenda.jar ^
   --icon "%ICO%" --app-version 1.0.0 --vendor "Ulises Gilio" ^
-  --description "Agenda de citas para clinicas de fisioterapia" --dest build-exe
+  --description "Agenda de citas para clinicas de fisioterapia" ^
+  --add-modules java.base,java.desktop,java.sql,java.logging,jdk.localedata,jdk.unsupported ^
+  --jlink-options "--strip-debug --no-man-pages --no-header-files --include-locales=es,en" --dest build-exe
 if errorlevel 1 (
   echo No se pudo crear el ejecutable. Compruebe que tiene un JDK 17 o superior en el PATH.
   pause
