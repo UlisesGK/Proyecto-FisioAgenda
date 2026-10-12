@@ -7,3 +7,6 @@ target/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Ejecutable de Windows generado con crear_exe.bat
+build-exe/

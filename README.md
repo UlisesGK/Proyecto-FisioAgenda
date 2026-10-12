@@ -22,6 +22,8 @@ Proyecto Intermodular del CFGS Desarrollo de Aplicaciones Multiplataforma (Unive
 ```
 java -jar FisioAgenda.jar          # o doble clic en el JAR, ejecutar.bat (Windows) o ./ejecutar.sh (Linux/macOS)
 ```
+En Windows, `crear_exe.bat` genera `FisioAgenda.exe` con el icono de la aplicación y su propio Java (usa `jpackage`, incluido en el JDK 17 o superior); queda en `build-exe\FisioAgenda\`.
+
 La base de datos SQLite se crea en `~/.fisioagenda/fisioagenda.db` con datos de demostración. Ruta alternativa: `java -Dfisioagenda.db=ruta.db -jar FisioAgenda.jar`.
 
 | Usuario | Contraseña | Rol |
