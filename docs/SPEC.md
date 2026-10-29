@@ -32,7 +32,7 @@ ui/dialogs/                    -> PacienteDialog, CitaDialog, TratamientoDialog,
 Regla de capas: `ui` solo habla con `service` (vía `ServiceLocator`) y `model`. `service` usa `dao` + `security` + `util`.
 `dao.sqlite` usa `db`. Ninguna clase de `ui` importa `java.sql`.
 
-## Base de datos (SQLite) — 5 tablas relacionadas
+## Base de datos (SQLite) — 6 tablas relacionadas
 Fichero por defecto: `${user.home}/.fisioagenda/fisioagenda.db` (crear carpeta si no existe).
 Se puede sobrescribir con la propiedad de sistema `fisioagenda.db` (ruta de fichero; los tests usan un fichero temporal).
 Al abrir la conexión: `PRAGMA foreign_keys = ON;`. Fechas guardadas como TEXT ISO-8601
@@ -89,6 +89,11 @@ CREATE TABLE IF NOT EXISTS nota_clinica (
   fecha TEXT NOT NULL,
   contenido TEXT NOT NULL,
   escala_dolor INTEGER NOT NULL CHECK (escala_dolor BETWEEN 0 AND 10)
+);
+CREATE TABLE IF NOT EXISTS dispositivo_recordado (   -- "Recordar este dispositivo"
+  token_hash TEXT PRIMARY KEY,                       -- SHA-256 del token guardado en el equipo
+  usuario_id INTEGER NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+  expira TEXT NOT NULL                               -- 30 días
 );
 CREATE INDEX IF NOT EXISTS idx_nota_paciente ON nota_clinica(paciente_id, fecha);
 ```

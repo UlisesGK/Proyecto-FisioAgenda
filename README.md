@@ -35,7 +35,7 @@ La base de datos SQLite se crea en `~/.fisioagenda/fisioagenda.db` con datos de 
 
 ## Compilación y pruebas
 ```
-mvn clean package    # compila, ejecuta las 234 pruebas JUnit 5 y genera target/FisioAgenda.jar
+mvn clean package    # compila, ejecuta las 256 pruebas JUnit 5 y genera target/FisioAgenda.jar
 mvn test             # solo pruebas
 ```
 
