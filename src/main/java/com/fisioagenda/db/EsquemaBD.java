@@ -28,7 +28,7 @@ import java.util.List;
  */
 public final class EsquemaBD {
 
-    /** Sentencias DDL del esquema (5 tablas e índices), idempotentes gracias a {@code IF NOT EXISTS}. */
+    /** Sentencias DDL del esquema (6 tablas e índices), idempotentes gracias a {@code IF NOT EXISTS}. */
     private static final String[] DDL = {
         """
         CREATE TABLE IF NOT EXISTS usuario (

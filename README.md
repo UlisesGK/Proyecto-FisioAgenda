@@ -1,7 +1,7 @@
 # FisioAgenda
 
 Aplicación de escritorio en Java para la gestión de pacientes, citas e historial clínico en clínicas de fisioterapia pequeñas.
-Proyecto Intermodular del CFGS Desarrollo de Aplicaciones Multiplataforma (Universae, curso 2025-2026). Autor: Ulises Gilio Kreiff.
+Proyecto Intermodular del CFGS Desarrollo de Aplicaciones Multiplataforma (Universae, curso 2026-2027). Autor: Ulises Gilio Kreiff.
 
 ![Agenda](docs/capturas/06_agenda.png)
 
